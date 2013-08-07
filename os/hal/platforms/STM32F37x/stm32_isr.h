@@ -70,6 +70,7 @@
 #define STM32_TIM7_HANDLER          Vector11C
 #define STM32_TIM12_HANDLER         VectorEC
 #define STM32_TIM14_HANDLER         VectorF4
+#define STM32_TIM19_HANDLER         Vector178
 
 #define STM32_TIM2_NUMBER           28
 #define STM32_TIM3_NUMBER           29
@@ -79,6 +80,7 @@
 #define STM32_TIM7_NUMBER           55
 #define STM32_TIM12_NUMBER          43
 #define STM32_TIM14_NUMBER          45
+#define STM32_TIM19_NUMBER          78
 
 /*
  * USART units.

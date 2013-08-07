@@ -91,6 +91,14 @@ PWMDriver PWMD8;
 PWMDriver PWMD9;
 #endif
 
+/**
+ * @brief   PWMD19 driver identifier.
+ * @note    The driver PWMD19 allocates the timer TIM19 when enabled.
+ */
+#if STM32_PWM_USE_TIM19 || defined(__DOXYGEN__)
+PWMDriver PWMD19;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
@@ -100,7 +108,8 @@ PWMDriver PWMD9;
 /*===========================================================================*/
 
 #if STM32_PWM_USE_TIM2 || STM32_PWM_USE_TIM3 || STM32_PWM_USE_TIM4 ||       \
-    STM32_PWM_USE_TIM5 || STM32_PWM_USE_TIM9 || defined(__DOXYGEN__)
+    STM32_PWM_USE_TIM5 || STM32_PWM_USE_TIM9 || STM32_PWM_USE_TIM19 ||      \
+    defined(__DOXYGEN__)
 /**
  * @brief   Common TIM2...TIM5,TIM9 IRQ handler.
  * @note    It is assumed that the various sources are only activated if the
@@ -335,6 +344,25 @@ CH_IRQ_HANDLER(STM32_TIM9_HANDLER) {
 }
 #endif /* STM32_PWM_USE_TIM9 */
 
+#if STM32_PWM_USE_TIM19
+#if !defined(STM32_TIM19_HANDLER)
+#error "STM32_TIM19_HANDLER not defined"
+#endif
+/**
+ * @brief   TIM9 interrupt handler.
+ *
+ * @isr
+ */
+CH_IRQ_HANDLER(STM32_TIM19_HANDLER) {
+
+  CH_IRQ_PROLOGUE();
+
+  pwm_lld_serve_interrupt(&PWMD19);
+
+  CH_IRQ_EPILOGUE();
+}
+#endif /* STM32_PWM_USE_TIM9 */
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -386,6 +414,12 @@ void pwm_lld_init(void) {
   /* Driver initialization.*/
   pwmObjectInit(&PWMD9);
   PWMD9.tim = STM32_TIM9;
+#endif
+
+#if STM32_PWM_USE_TIM19
+  /* Driver initialization.*/
+  pwmObjectInit(&PWMD19);
+  PWMD19.tim = STM32_TIM19;
 #endif
 }
 
@@ -469,6 +503,15 @@ void pwm_lld_start(PWMDriver *pwmp) {
       rccResetTIM9();
       nvicEnableVector(STM32_TIM9_NUMBER,
                        CORTEX_PRIORITY_MASK(STM32_PWM_TIM9_IRQ_PRIORITY));
+      pwmp->clock = STM32_TIMCLK1;
+    }
+#endif
+#if STM32_PWM_USE_TIM19
+    if (&PWMD19 == pwmp) {
+      rccEnableTIM19(FALSE);
+      rccResetTIM19();
+      nvicEnableVector(STM32_TIM19_NUMBER,
+                       CORTEX_PRIORITY_MASK(STM32_PWM_TIM19_IRQ_PRIORITY));
       pwmp->clock = STM32_TIMCLK1;
     }
 #endif
@@ -651,6 +694,12 @@ void pwm_lld_stop(PWMDriver *pwmp) {
     if (&PWMD9 == pwmp) {
       nvicDisableVector(STM32_TIM9_NUMBER);
       rccDisableTIM9(FALSE);
+    }
+#endif
+#if STM32_PWM_USE_TIM19
+    if (&PWMD19 == pwmp) {
+      nvicDisableVector(STM32_TIM19_NUMBER);
+      rccDisableTIM19(FALSE);
     }
 #endif
   }
